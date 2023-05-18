@@ -42,11 +42,24 @@ make clean
 После загрузки модуля появится новые файлы /dev/vramdisk и /dev/vramdisk1, /dev/vramdisk2, /dev/vramdisk5
 В списке блочных устройств появятся 4 новых записи
 Выполнить команду `lsblk`
-
-## Примеры использования
-
 ```
 mkfs.vfat /dev/vramdisk1 - создать файловую систему vfat на разделе диска
 mkdir /mnt/vramdisk1 – создать директорию для монтирования диска
 mount -t vfat /dev/vramdisk1 /mnt/vramdisk1 - смонтировать файловую систему в директорию
+```
+## Примеры использования
+```
+make 
+make start
+make create
+
+time sudo cp /mnt/vramdisk1/file /mnt/vramdisk2
+time sudo cp /mnt/vramdisk2/file /mnt/vramdisk5
+time sudo cp /mnt/vramdisk5/file /mnt/vramdisk1
+
+time sudo cp /mnt/vramdisk1/file ~
+time sudo cp /mnt/vramdisk2/file ~
+time sudo cp /mnt/vramdisk5/file ~
+
+make exit
 ```
