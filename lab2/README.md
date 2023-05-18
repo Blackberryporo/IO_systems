@@ -51,6 +51,7 @@ mount -t vfat /dev/vramdisk1 /mnt/vramdisk1 - смонтировать файл�
 ```
 make 
 make start
+make test
 make create
 
 time sudo cp /mnt/vramdisk1/file /mnt/vramdisk2
