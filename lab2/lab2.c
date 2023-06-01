@@ -64,92 +64,71 @@ static struct lock_class_key sr_bio_compl_lkclass;
 #define head4size(s) (((s) % CYL_SIZE) / HEAD_SIZE)
 #define cyl4size(s) ((s) / CYL_SIZE)
 
-unsigned char getSector(unsigned int sector) {
-  return sector % 63 + 1;/* As indexed from 1 */
-}
-
-unsigned int getTrack(unsigned int sector) {
-  return sector / 63;
-}
-
-unsigned char getHead(unsigned int sector) {
-  return getTrack(sector) % 255;
-}
-
-unsigned char getCyl(unsigned int sector) {
-  return getTrack(sector) / 255 + 1;
-}
-
-#define SECTORS(sec) (sec % 63 + 1) /* As indexed from 1 */
-#define TRACKS(sec) (sec / 63)
-#define CYLS(sec) (TRACKS(sec) / 255 + 1)
-#define HEADS(sec) (TRACKS(sec) % 255)
-
 static PartTable def_part_table =
 {
 	{
 		boot_type: 0x00,
-		start_sec: SECTORS(0x1),
-		start_head: HEADS(0x1),
-		start_cyl: CYLS(0x1),
+		start_sec: 0x2, 
+		start_head: 0x0, 
+		start_cyl: 0x0,
 		part_type: 0x83,
-		end_head: HEADS((0x1 + 0x4FFF - 1)),
-		end_sec: SECTORS((0x1 + 0x4FFF - 1)),
-		end_cyl: CYLS((0x1 + 0x4FFF - 1)),
+		end_head: 0x3,
+		end_sec: 0x20,
+		end_cyl: 0x9F,
 		abs_start_sec: 0x1,
 		sec_in_part: 0x4FFF // 10Mbyte
 	},
 	{
 		boot_type: 0x00,
-		start_head: HEADS(0x5000),
-		start_sec: SECTORS(0x5000),
-		start_cyl: CYLS(0x5000),
+		start_head: 0x4,
+		start_sec: 0x1,
+		start_cyl: 0x0,
 		part_type: 0x83,
-		end_head: HEADS((0x5000 + 0xA000 - 1)),
-		end_sec: SECTORS((0x5000 + 0xA000 - 1)),
-		end_cyl: CYLS((0x5000 + 0xA000 - 1)),
+		end_head: 0xB,
+		end_sec: 0x20,
+		end_cyl: 0x9F,
 		abs_start_sec: 0x5000,
 		sec_in_part: 0xA000 // 20Mbyte
 	},
 	{
 		boot_type: 0x00,
-		start_head: HEADS(0xF000),
-		start_sec: SECTORS(0xF000),
-		start_cyl: CYLS(0xF000),
+		start_head: 0xC,
+		start_sec: 0x1,
+		start_cyl: 0x0,
 		part_type: 0x05, // extended partition type
-		end_head: HEADS((0xF000 + 0xA000 - 1)),
-		end_sec: SECTORS((0xF000 + 0xA000 - 1)),
-		end_cyl: CYLS((0xF000 + 0xA000 - 1)),
+		end_head: 0x13,
+		end_sec: 0x20,
+		end_cyl: 0x9F,
 		abs_start_sec: 0xF000, // 0x5000 + 0xA000
 		sec_in_part: 0xA000 // 20Mbyte
 	}
 };
 
-static unsigned int def_log_part_br_abs_start_sector[] = {0xF000, 0xA000};
+static unsigned int def_log_part_br_abs_start_sector[] = {0xF000, 0x14000}; //0xF000 + 10MByte
 static const PartTable def_log_part_table[] =
-{
-	{
+{ 
+  {
 		{
 			boot_type: 0x00,
-      start_head: HEADS(0x1),
-      start_sec: SECTORS(0x1),
-      start_cyl: CYLS(0xF000),
+			start_head: head4size(0xF000),
+			start_sec: sec4size(0xF000), 
+			start_cyl: 0x0, 
 			part_type: 0x83,
-      end_head: HEADS((0x1 + 0x4FFF - 1)),
-      end_sec: SECTORS((0x1 + 0x4FFF - 1)),
-      end_cyl: CYLS((0xF000 / 2 - 1)),
+			end_head: head4size(0x13FFF),
+			end_sec: sec4size(0x13FFF),
+			end_cyl: 0x9F,
 			abs_start_sec: 0x1,
 			sec_in_part: 0x4FFF
 		},
 		{
 			boot_type: 0x00,
-      start_head: HEADS(0x5000),
-      start_sec: SECTORS(0x5000),
-      start_cyl: CYLS((0xF000 / 2)),
+			start_head: head4size(0x14000),
+			start_sec: sec4size(0x14000),
+			start_cyl: 0x00,
 			part_type: 0x05,
-      end_head: HEADS((0x5000 + 0x5000 - 1)),
-      end_sec: SECTORS((0x5000 + 0x5000 - 1)),
-      end_cyl: CYLS((0xF000 / 2 + 0x5000 - 1)),
+			end_head: head4size(0x18FFF),
+			end_sec: sec4size(0x18FFFF),
+			end_cyl: 0x9F,
 			abs_start_sec: 0x5000,
 			sec_in_part: 0x5000
 		}
@@ -157,17 +136,18 @@ static const PartTable def_log_part_table[] =
 	{
 		{
 			boot_type: 0x00,
-      start_head: HEADS(0x1),
-      start_sec: SECTORS(0x1),
-      start_cyl: CYLS((0xF000 / 2)),
+			start_head: head4size(0x14000),
+			start_sec: sec4size(0x14000),
+			start_cyl: 0x00,
 			part_type: 0x83,
-      end_head: HEADS((0x1 + 0x4FFF - 1)),
-      end_sec: SECTORS((0x1 + 0x4FFF - 1)),
-      end_cyl: CYLS((0xF000 / 2 + 0x5000 - 1)),
+		  end_head: head4size(0x18FFFF),
+		  end_sec: sec4size(0x18FFFF),
+			end_cyl: 0x9F,
 			abs_start_sec: 0x1,
 			sec_in_part: 0x4FFF
 		}
 	}
+
 };
 
 static void copy_mbr(u8 *disk) {
